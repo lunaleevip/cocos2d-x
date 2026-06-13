@@ -181,7 +181,15 @@ Only valid for cocos2d-mac. Not supported on cocos2d-ios.
  */
 #ifndef CC_TEXTURE_ATLAS_USE_VAO
     #if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS) || (CC_TARGET_PLATFORM == CC_PLATFORM_MAC)
-        #define CC_TEXTURE_ATLAS_USE_VAO 1
+        /* iOS 模拟器（Apple Silicon）的软件 OpenGL 渲染器对 VAO 支持不稳定，
+           会在着色器 JIT 编译（cvmsServerElementBuild）时 SIGBUS 崩溃。
+           仅在模拟器上禁用 VAO，走非 VAO 渲染路径；真机硬件 GPU 仍启用。 */
+        #include <TargetConditionals.h>
+        #if TARGET_OS_SIMULATOR
+            #define CC_TEXTURE_ATLAS_USE_VAO 0
+        #else
+            #define CC_TEXTURE_ATLAS_USE_VAO 1
+        #endif
     #else
         /* Some Windows display adapter driver cannot support VAO. */
         /* Some android devices cannot support VAO very well, so we disable it by default for android platform. */

@@ -39,6 +39,9 @@ THE SOFTWARE.
 #include "CCDirector.h"
 #include "support/CCPointExtension.h"
 #include "cocoa/CCGeometry.h"
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
 #include "textures/CCTexture2D.h"
 #include "cocoa/CCAffineTransform.h"
 #include "support/TransformUtils.h"
@@ -559,12 +562,24 @@ void CCSprite::draw(void)
     ccGLEnableVertexAttribs( kCCVertexAttribFlag_PosColorTex );
 
 #define kQuadSize sizeof(m_sQuad.bl)
-#ifdef EMSCRIPTEN
+// iOS 模拟器（Apple Silicon 软件 GL）与 WebGL 一样无法安全处理 client-side
+// vertex array，会在 glDrawArrays 的软件光栅化 JIT 时 SIGBUS 崩溃。
+// 故在模拟器上把顶点数据上传到 VBO 再绘制（内联实现，不依赖基类）；真机仍用 client array。
+#if defined(TARGET_OS_SIMULATOR) && TARGET_OS_SIMULATOR
+    static GLuint s_simQuadVBO = 0;
+    if (s_simQuadVBO == 0)
+    {
+        glGenBuffers(1, &s_simQuadVBO);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, s_simQuadVBO);
+    glBufferData(GL_ARRAY_BUFFER, 4 * kQuadSize, &m_sQuad, GL_DYNAMIC_DRAW);
+    long offset = 0;
+#elif defined(EMSCRIPTEN)
     long offset = 0;
     setGLBufferData(&m_sQuad, 4 * kQuadSize, 0);
 #else
     long offset = (long)&m_sQuad;
-#endif // EMSCRIPTEN
+#endif // simulator / EMSCRIPTEN
 
     // vertex
     int diff = offsetof( ccV3F_C4B_T2F, vertices);
@@ -580,6 +595,10 @@ void CCSprite::draw(void)
 
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+#if defined(TARGET_OS_SIMULATOR) && TARGET_OS_SIMULATOR
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif
 
     CHECK_GL_ERROR_DEBUG();
 

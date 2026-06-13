@@ -31,6 +31,29 @@ THE SOFTWARE.
 
 #include<math.h>
 
+// ---- .pg 自定义加密纹理透明解密 ----
+// 本游戏美术为 .pg 格式：标准 PNG 经第1层加密（文件头前 min(1000,len) 字节
+// XOR 0x18）。plist 里 textureFileName 写的是 X.png，但 bundle 里实际是 X.pg。
+// 这里在加载时透明处理：若请求的 .png 不存在则回退到同名 .pg，读出字节后就地
+// XOR 还原为标准 PNG 再交给解码器，无需预先把 .pg 解密成 .png 落盘。
+#define CC_PG_XOR_KEY 0x18
+#define CC_PG_XOR_LIMIT 1000
+
+static bool cc_isPGData(const unsigned char* p, unsigned long n)
+{
+    // 加密后的 PNG 魔数：0x89^0x18, 'P'^0x18, 'N'^0x18, 'G'^0x18 = 91 48 56 5F
+    return (n >= 4 && p[0] == 0x91 && p[1] == 0x48 && p[2] == 0x56 && p[3] == 0x5F);
+}
+
+static void cc_decryptPG(unsigned char* p, unsigned long n)
+{
+    unsigned long limit = (n < CC_PG_XOR_LIMIT) ? n : CC_PG_XOR_LIMIT;
+    for (unsigned long i = 0; i < limit; i++)
+    {
+        p[i] ^= CC_PG_XOR_KEY;
+    }
+}
+
 
 typedef struct
 {
@@ -219,10 +242,23 @@ static bool _initWithString(const char * pText, cocos2d::CCImage::ETextAlign eAl
         // the font family name itself. This stripping step is required especially for references to user fonts stored in CCB files; CCB files appear to store
         // the '.ttf' extensions when referring to custom fonts.
         fntName = [[fntName lastPathComponent] stringByDeletingPathExtension];
-        
-        // create the font   
+
+        // 默认字体：游戏多处 fontName 传空字符串，原会回退 iOS 系统字体（不统一）。
+        // 改为统一回退到资源库自带的 ourttf，保证全局默认字体为游戏字体。
+        if ([fntName length] == 0)
+        {
+            fntName = @"ourttf";
+        }
+
+        // create the font
         id font = [UIFont fontWithName:fntName size:nSize];
-        
+
+        // 指定字体加载失败时，先尝试 ourttf，再退系统字体。
+        if (!font && ![fntName isEqualToString:@"ourttf"])
+        {
+            font = [UIFont fontWithName:@"ourttf" size:nSize];
+        }
+
         if (font)
         {
             dim = _calculateStringSize(str, font, &constrainSize);
@@ -438,11 +474,34 @@ bool CCImage::initWithImageFile(const char * strPath, EImageFormat eImgFmt/* = e
 {
 	bool bRet = false;
     unsigned long nSize = 0;
-    unsigned char* pBuffer = CCFileUtils::sharedFileUtils()->getFileData(
-				CCFileUtils::sharedFileUtils()->fullPathForFilename(strPath).c_str(),
-				"rb",
-				&nSize);
-				
+    CCFileUtils* fu = CCFileUtils::sharedFileUtils();
+    std::string fullPath = fu->fullPathForFilename(strPath);
+
+    // .pg 回退：若请求的图片（通常 .png）在 bundle 中不存在，尝试同名 .pg。
+    if (!fu->isFileExist(fullPath))
+    {
+        std::string p(strPath);
+        size_t dot = p.find_last_of('.');
+        if (dot != std::string::npos)
+        {
+            std::string pgName = p.substr(0, dot) + ".pg";
+            std::string pgFull = fu->fullPathForFilename(pgName.c_str());
+            if (fu->isFileExist(pgFull))
+            {
+                fullPath = pgFull;
+            }
+        }
+    }
+
+    unsigned char* pBuffer = fu->getFileData(fullPath.c_str(), "rb", &nSize);
+
+    // 若读到的是 .pg 加密数据，就地 XOR 还原为标准 PNG。
+    if (pBuffer != NULL && cc_isPGData(pBuffer, nSize))
+    {
+        cc_decryptPG(pBuffer, nSize);
+        eImgFmt = kFmtPng;
+    }
+
     if (pBuffer != NULL && nSize > 0)
     {
         bRet = initWithImageData(pBuffer, nSize, eImgFmt);
