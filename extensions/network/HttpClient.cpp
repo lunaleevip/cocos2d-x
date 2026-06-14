@@ -282,11 +282,13 @@ public:
 
     ~CURLRaii()
     {
-        if (m_curl)
-            curl_easy_cleanup(m_curl);
+        // [SGSCQ 诊断] 跳过 curl_easy_cleanup —— 老 libcurl 7.26 在 iOS26 模拟器
+        // cleanup 时 SIGSEGV。临时故意泄漏句柄，验证请求链路是否真通。
+        //if (m_curl)
+        //    curl_easy_cleanup(m_curl);
         /* free the linked list for header data */
-        if (m_headers)
-            curl_slist_free_all(m_headers);
+        //if (m_headers)
+        //    curl_slist_free_all(m_headers);
     }
 
     template <class T>

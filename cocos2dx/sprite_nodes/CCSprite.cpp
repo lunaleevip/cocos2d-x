@@ -124,8 +124,9 @@ CCSprite* CCSprite::createWithSpriteFrame(CCSpriteFrame *pSpriteFrame)
 CCSprite* CCSprite::createWithSpriteFrameName(const char *pszSpriteFrameName)
 {
     CCSpriteFrame *pFrame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(pszSpriteFrameName);
-    // 引导场景中部分纹理帧可能不存在，静默返回 nil 而非 CCAssert 崩溃。
-    if (NULL == pFrame) return NULL;
+    if (NULL == pFrame) {
+        return NULL;
+    }
     return createWithSpriteFrame(pFrame);
 }
 
