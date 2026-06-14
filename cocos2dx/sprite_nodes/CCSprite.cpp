@@ -124,13 +124,8 @@ CCSprite* CCSprite::createWithSpriteFrame(CCSpriteFrame *pSpriteFrame)
 CCSprite* CCSprite::createWithSpriteFrameName(const char *pszSpriteFrameName)
 {
     CCSpriteFrame *pFrame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(pszSpriteFrameName);
-    
-#if COCOS2D_DEBUG > 0
-    char msg[256] = {0};
-    sprintf(msg, "Invalid spriteFrameName: %s", pszSpriteFrameName);
-    CCAssert(pFrame != NULL, msg);
-#endif
-    
+    // 引导场景中部分纹理帧可能不存在，静默返回 nil 而非 CCAssert 崩溃。
+    if (NULL == pFrame) return NULL;
     return createWithSpriteFrame(pFrame);
 }
 
