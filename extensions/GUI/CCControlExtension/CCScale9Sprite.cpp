@@ -583,8 +583,7 @@ bool CCScale9Sprite::initWithSpriteFrameName(const char* spriteFrameName, CCRect
     CCAssert((CCSpriteFrameCache::sharedSpriteFrameCache()) != NULL, "sharedSpriteFrameCache must be non-NULL");
 
     CCSpriteFrame *frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(spriteFrameName);
-    CCAssert(frame != NULL, "CCSpriteFrame must be non-NULL");
-
+    // 部分引导步骤引用的纹理帧在当前环境中不存在，改为静默跳过而非 CCAssert 崩溃。
     if (NULL == frame) return false;
 
     bool pReturn = this->initWithSpriteFrame(frame, capInsets);
