@@ -658,35 +658,47 @@ extern JSObject* jsb_ColliderBody_prototype;
 
 void register_all_cocos2dx_studio_manual(JSContext* cx, JSObject* global)
 {
-    JS_DefineFunction(cx, jsb_ColliderBody_prototype, "getCalculatedVertexList", js_cocos2dx_studio_ColliderBody_getCalculatedVertexList, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_ColliderBody_prototype)
+        JS_DefineFunction(cx, jsb_ColliderBody_prototype, "getCalculatedVertexList", js_cocos2dx_studio_ColliderBody_getCalculatedVertexList, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 
-    JS_DefineFunction(cx, jsb_Widget_prototype, "addTouchEventListener", js_cocos2dx_Widget_addTouchEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_Widget_prototype)
+        JS_DefineFunction(cx, jsb_Widget_prototype, "addTouchEventListener", js_cocos2dx_Widget_addTouchEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
 
-    JS_DefineFunction(cx, jsb_CheckBox_prototype, "addEventListenerCheckBox", js_cocos2dx_CheckBox_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_CheckBox_prototype)
+        JS_DefineFunction(cx, jsb_CheckBox_prototype, "addEventListenerCheckBox", js_cocos2dx_CheckBox_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
 
-    JS_DefineFunction(cx, jsb_Slider_prototype, "addEventListenerSlider", js_cocos2dx_Slider_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_Slider_prototype)
+        JS_DefineFunction(cx, jsb_Slider_prototype, "addEventListenerSlider", js_cocos2dx_Slider_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
     
-    JS_DefineFunction(cx, jsb_TextField_prototype, "addEventListenerTextField", js_cocos2dx_TextField_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_TextField_prototype)
+        JS_DefineFunction(cx, jsb_TextField_prototype, "addEventListenerTextField", js_cocos2dx_TextField_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
 
-    JS_DefineFunction(cx, jsb_PageView_prototype, "addEventListenerPageView", js_cocos2dx_PageView_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_PageView_prototype)
+        JS_DefineFunction(cx, jsb_PageView_prototype, "addEventListenerPageView", js_cocos2dx_PageView_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
     
-    JS_DefineFunction(cx, jsb_ScrollView_prototype, "addEventListenerScrollView", js_cocos2dx_ScrollView_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_ScrollView_prototype)
+        JS_DefineFunction(cx, jsb_ScrollView_prototype, "addEventListenerScrollView", js_cocos2dx_ScrollView_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
     
-    JS_DefineFunction(cx, jsb_ListView_prototype, "addEventListenerListView", js_cocos2dx_ListView_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_ListView_prototype)
+        JS_DefineFunction(cx, jsb_ListView_prototype, "addEventListenerListView", js_cocos2dx_ListView_addEventListener, 2, JSPROP_READONLY | JSPROP_PERMANENT);
 
-    JS_DefineFunction(cx, jsb_LayoutParameter_prototype, "setMargin", js_cocos2dx_LayoutParameter_setMargin, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_LayoutParameter_prototype) {
+        JS_DefineFunction(cx, jsb_LayoutParameter_prototype, "setMargin", js_cocos2dx_LayoutParameter_setMargin, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+        JS_DefineFunction(cx, jsb_LayoutParameter_prototype, "getMargin", js_cocos2dx_LayoutParameter_getMargin, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+    }
 
-    JS_DefineFunction(cx, jsb_LayoutParameter_prototype, "getMargin", js_cocos2dx_LayoutParameter_getMargin, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-
-    JS_DefineFunction(cx, jsb_CCArmatureAnimation_prototype, "setMovementEventCallFunc", js_cocos2dx_CCArmatureAnimation_setMovementEventCallFunc, 2, JSPROP_READONLY | JSPROP_PERMANENT);
-
-    JS_DefineFunction(cx, jsb_CCArmatureAnimation_prototype, "setFrameEventCallFunc", js_cocos2dx_CCArmatureAnimation_setFrameEventCallFunc, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_CCArmatureAnimation_prototype) {
+        JS_DefineFunction(cx, jsb_CCArmatureAnimation_prototype, "setMovementEventCallFunc", js_cocos2dx_CCArmatureAnimation_setMovementEventCallFunc, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+        JS_DefineFunction(cx, jsb_CCArmatureAnimation_prototype, "setFrameEventCallFunc", js_cocos2dx_CCArmatureAnimation_setFrameEventCallFunc, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    }
     
-    JS_DefineFunction(cx, jsb_CCArmatureDataManager_prototype, "addArmatureFileInfoAsync", jsb_Animation_addArmatureFileInfoAsyncCallFunc, 3, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_CCArmatureDataManager_prototype)
+        JS_DefineFunction(cx, jsb_CCArmatureDataManager_prototype, "addArmatureFileInfoAsync", jsb_Animation_addArmatureFileInfoAsyncCallFunc, 3, JSPROP_READONLY | JSPROP_PERMANENT);
     
 #if ENABLE_PHYSICS_CHIPMUNK_DETECT
-    JS_DefineFunction(cx, jsb_CCArmature_prototype, "_setCPBody", jsb_CCArmature_setCPBody, 1, JSPROP_READONLY | JSPROP_PERMANENT);
-    
-    JS_DefineFunction(cx, jsb_CCArmature_prototype, "getShapeList", jsb_CCArmature_getShapeList, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_CCArmature_prototype) {
+        JS_DefineFunction(cx, jsb_CCArmature_prototype, "_setCPBody", jsb_CCArmature_setCPBody, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+        JS_DefineFunction(cx, jsb_CCArmature_prototype, "getShapeList", jsb_CCArmature_getShapeList, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+    }
 #endif
 }

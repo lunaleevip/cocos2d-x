@@ -3,6 +3,7 @@
 
 #include "jsapi.h"
 #include "ScriptingCore.h"
+#include <type_traits>
 
 class JSScheduleWrapper;
 
@@ -38,7 +39,8 @@ extern callfuncTarget_proxy_t *_callfuncTarget_native_ht;
  * the app.
  */
 template <class T>
-inline js_type_class_t *js_get_type_from_native(T* native_obj) {
+inline typename std::enable_if<std::is_polymorphic<T>::value, js_type_class_t*>::type
+js_get_type_from_native_impl(T* native_obj) {
     js_type_class_t *typeProxy;
     long typeId = cocos2d::getHashCodeByString(typeid(*native_obj).name());
     HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
@@ -52,6 +54,20 @@ inline js_type_class_t *js_get_type_from_native(T* native_obj) {
         HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
     }
     return typeProxy;
+}
+
+template <class T>
+inline typename std::enable_if<!std::is_polymorphic<T>::value, js_type_class_t*>::type
+js_get_type_from_native_impl(T* native_obj) {
+    js_type_class_t *typeProxy;
+    long typeId = cocos2d::getHashCodeByString(typeid(T).name());
+    HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
+    return typeProxy;
+}
+
+template <class T>
+inline js_type_class_t *js_get_type_from_native(T* native_obj) {
+    return js_get_type_from_native_impl(native_obj);
 }
 
 /**
