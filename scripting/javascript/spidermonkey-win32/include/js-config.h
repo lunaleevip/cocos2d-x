@@ -24,11 +24,11 @@
 
 /* Define to 1 if the <endian.h> header is present and
    useable.  See jscpucfg.h.  */
-/* #undef JS_HAVE_ENDIAN_H */
+#define JS_HAVE_ENDIAN_H 1
 
 /* Define to 1 if the <machine/endian.h> header is present and
    useable.  See jscpucfg.h.  */
-/* #undef JS_HAVE_MACHINE_ENDIAN_H */
+#define JS_HAVE_MACHINE_ENDIAN_H 1
 
 /* Define to 1 if the <sys/isa_defs.h> header is present and
    useable.  See jscpucfg.h.  */
@@ -39,11 +39,11 @@
 
 /* Define to 1 if the N-byte __intN types are defined by the
    compiler.  */
-#define JS_HAVE___INTN 1
+/* #undef JS_HAVE___INTN */
 
 /* Define to 1 if #including <stddef.h> provides definitions for
    intptr_t and uintptr_t.  */
-#define JS_STDDEF_H_HAS_INTPTR_T 1
+/* #undef JS_STDDEF_H_HAS_INTPTR_T */
 
 /* Define to 1 if #including <crtdefs.h> provides definitions for
    intptr_t and uintptr_t.  */
@@ -56,10 +56,14 @@
 /* #undef JS_INT32_TYPE */
 /* #undef JS_INT64_TYPE */
 /* #undef JS_INTPTR_TYPE */
-/* #undef JS_BYTES_PER_WORD */
+#if defined(__LP64__) && __LP64__
+#define JS_BYTES_PER_WORD 8
+#else
+#define JS_BYTES_PER_WORD 4
+#endif
 
 /* Some mozilla code uses JS-friend APIs that depend on JS_METHODJIT being
    correct. */
-#define JS_METHODJIT 1
+/* #undef JS_METHODJIT */
 
 #endif /* js_config_h___ */
