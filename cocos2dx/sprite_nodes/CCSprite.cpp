@@ -125,6 +125,8 @@ CCSprite* CCSprite::createWithSpriteFrameName(const char *pszSpriteFrameName)
 {
     CCSpriteFrame *pFrame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(pszSpriteFrameName);
     if (NULL == pFrame) {
+        // 诊断：把缺失帧名写入 Documents（app 沙箱可写）
+        { FILE *f = fopen("sgscq_frames.txt", "a"); if (f) { fprintf(f, "%s\n", pszSpriteFrameName); fclose(f); } }
         return NULL;
     }
     return createWithSpriteFrame(pFrame);

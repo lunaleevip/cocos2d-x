@@ -584,7 +584,10 @@ bool CCScale9Sprite::initWithSpriteFrameName(const char* spriteFrameName, CCRect
 
     CCSpriteFrame *frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(spriteFrameName);
     // 部分引导步骤引用的纹理帧在当前环境中不存在，改为静默跳过而非 CCAssert 崩溃。
-    if (NULL == frame) return false;
+    if (NULL == frame) {
+        { FILE *f = fopen("sgscq_frames.txt", "a"); if (f) { fprintf(f, "Scale9: %s\n", spriteFrameName); fclose(f); } }
+        return false;
+    }
 
     bool pReturn = this->initWithSpriteFrame(frame, capInsets);
     return pReturn;
