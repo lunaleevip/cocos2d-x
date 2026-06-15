@@ -520,17 +520,20 @@ JSBool ScriptingCore::runScript(const char *path, JSObject* global, JSContext* c
     if (!script) {
         /* Clear any pending exception from previous failed decoding.  */
         ReportException(cx);
-        
+
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
         CCString* content = CCString::createWithContentsOfFile(path);
         if (content) {
-            // Not supported in SpiderMonkey 19.0
-            //JSScript* script = JS_CompileScript(cx, global, (char*)content, contentSize, path, 1);
             const char* contentCStr = content->getCString();
             script = JS::Compile(cx, obj, options, contentCStr, strlen(contentCStr));
         }
 #else
-        script = JS::Compile(cx, obj, options, fullPath.c_str());
+        // Try the .js version — important for platforms where JS_DecodeScript
+        // is not supported (e.g., Win32 SM22 without XDR). Also handles the
+        // case where bytecode was found but failed to decode.
+        std::string jsPath = RemoveFileExt(std::string(path)) + ".js";
+        std::string jsFullPath = futil->fullPathForFilename(jsPath.c_str());
+        script = JS::Compile(cx, obj, options, jsFullPath.c_str());
 #endif
     }
     JSBool evaluatedOK = false;
@@ -541,8 +544,30 @@ JSBool ScriptingCore::runScript(const char *path, JSObject* global, JSContext* c
         evaluatedOK = JS_ExecuteScript(cx, global, script, &rval);
         if (JS_FALSE == evaluatedOK) {
             CCLog("(evaluatedOK == JS_FALSE)");
+            // SGSCQ: log exception to file for debugging
+            {
+                FILE* lf = fopen("sgscq_jserr.log", "a");
+                if (lf) {
+                    fprintf(lf, "EXEC FAIL: %s\n", path);
+                    if (JS_IsExceptionPending(cx)) {
+                        jsval exn;
+                        JS_GetPendingException(cx, &exn);
+                        JSString* s = JS_ValueToString(cx, exn);
+                        if (s) {
+                            JSStringWrapper w(s);
+                            fprintf(lf, "  EXN: %s\n", w.get().c_str());
+                        }
+                    }
+                    fclose(lf);
+                }
+            }
             JS_ReportPendingException(cx);
+            JS_ClearPendingException(cx);
         }
+    } else {
+        // SGSCQ: script compile/decode returned NULL
+        FILE* lf = fopen("sgscq_jserr.log", "a");
+        if (lf) { fprintf(lf, "COMPILE/DECODE NULL: %s\n", path); fclose(lf); }
     }
     return evaluatedOK;
 }
@@ -594,6 +619,16 @@ void ScriptingCore::reportError(JSContext *cx, const char *message, JSErrorRepor
             report->filename ? report->filename : "<no filename=\"filename\">",
             (unsigned int) report->lineno,
             message);
+    // SGSCQ: also log to file for debugging
+    {
+        FILE* lf = fopen("sgscq_jserr.log", "a");
+        if (lf) {
+            fprintf(lf, "  JS_ERROR %s:%u: %s\n",
+                report->filename ? report->filename : "?",
+                (unsigned int) report->lineno, message);
+            fclose(lf);
+        }
+    }
 };
 
 

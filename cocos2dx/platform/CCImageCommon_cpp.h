@@ -137,6 +137,32 @@ bool CCImage::initWithImageFile(const char * strPath, EImageFormat eImgFmt/* = e
     unsigned long nSize = 0;
     std::string fullPath = CCFileUtils::sharedFileUtils()->fullPathForFilename(strPath);
     unsigned char* pBuffer = CCFileUtils::sharedFileUtils()->getFileData(fullPath.c_str(), "rb", &nSize);
+
+    // SGSCQ: .pg 运行时透明解密。
+    // 美术资源是自定义加密格式 .pg（文件头 91 48 56 5F，前 min(1000,len) 字节 XOR 0x18）。
+    // plist 的 textureFileName 指向 .png，故先按 .png 查找；若不存在则回退到同名 .pg，
+    // 加载后在内存中解密，再按标准 PNG 解码。
+    if (pBuffer == NULL)
+    {
+        // 将 .png 替换为 .pg
+        std::string pgPath = fullPath;
+        size_t pos = pgPath.rfind(".png");
+        if (pos != std::string::npos)
+        {
+            pgPath.replace(pos, 4, ".pg");
+            pBuffer = CCFileUtils::sharedFileUtils()->getFileData(pgPath.c_str(), "rb", &nSize);
+            if (pBuffer != NULL && nSize > 0)
+            {
+                // XOR 0x18 解密前 min(1000,nSize) 字节
+                unsigned long xorLen = nSize < 1000 ? nSize : 1000;
+                for (unsigned long i = 0; i < xorLen; i++)
+                {
+                    pBuffer[i] ^= 0x18;
+                }
+            }
+        }
+    }
+
     if (pBuffer != NULL && nSize > 0)
     {
         bRet = initWithImageData(pBuffer, nSize, eImgFmt);
