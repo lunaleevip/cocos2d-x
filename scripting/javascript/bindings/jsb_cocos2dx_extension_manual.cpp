@@ -783,4 +783,19 @@ void register_all_cocos2dx_extension_manual(JSContext* cx, JSObject* global)
         JS_DefineFunction(cx, jsb_CCControl_prototype, "addTargetWithActionForControlEvents", js_cocos2dx_CCControl_addTargetWithActionForControlEvents, 3, JSPROP_READONLY | JSPROP_PERMANENT);
         JS_DefineFunction(cx, jsb_CCControl_prototype, "removeTargetWithActionForControlEvents", js_cocos2dx_CCControl_removeTargetWithActionForControlEvents, 3, JSPROP_READONLY | JSPROP_PERMANENT);
     }
+    // SGSCQ: 补注册 cc.TableView.create 静态方法。auto 绑定注册了 TableView 类与
+    // prototype，但没挂静态 create（游戏用 cc.TableView.create(...) 创建）。
+    // 取 cc 命名空间下的 TableView 类对象，挂上 js_cocos2dx_CCTableView_create。
+    {
+        jsval nsval;
+        JSObject* ccObj = NULL;
+        if (JS_GetProperty(cx, global, "cc", &nsval) && !JSVAL_IS_PRIMITIVE(nsval)) {
+            ccObj = JSVAL_TO_OBJECT(nsval);
+            jsval tvval;
+            if (JS_GetProperty(cx, ccObj, "TableView", &tvval) && !JSVAL_IS_PRIMITIVE(tvval)) {
+                JSObject* tvObj = JSVAL_TO_OBJECT(tvval);
+                JS_DefineFunction(cx, tvObj, "create", js_cocos2dx_CCTableView_create, 3, JSPROP_READONLY | JSPROP_PERMANENT);
+            }
+        }
+    }
 }
