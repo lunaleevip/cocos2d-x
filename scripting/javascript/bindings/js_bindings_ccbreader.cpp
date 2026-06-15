@@ -314,10 +314,26 @@ void register_CCBuilderReader(JSContext *cx, JSObject *obj) {
 	}
 	obj = ns;
 
-    JSObject  *tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, obj, "(function () { return cc._Reader; })()"));
-    JS_DefineFunction(cx, tmpObj, "create", js_CocosBuilder_create, 2, JSPROP_READONLY | JSPROP_PERMANENT);
-    JS_DefineFunction(cx, tmpObj, "loadScene", js_cocos2dx_CCBReader_createSceneWithNodeGraphFromFile, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    jsval result;
+    // SGSCQ: 直接 JS_GetProperty 取 cc._Reader（原 JS_EvaluateScript 第4参数长度
+    // 写死40但字符串实际38字符，且 SM22 下行为不稳）。obj 此时已是 cc 命名空间。
+    JSBool gotReader = JS_GetProperty(cx, obj, "_Reader", &result);
+    {
+        FILE* lf = fopen("sgscq_jserr.log","a");
+        if(lf){ fprintf(lf,"  [CCBReader] register: got=%d void=%d null=%d proto=%p\n",
+                (int)gotReader, (int)JSVAL_IS_VOID(result), (int)JSVAL_IS_NULL(result),
+                (void*)jsb_CCBReader_prototype); fclose(lf);}
+    }
+    if (gotReader && !JSVAL_IS_VOID(result) && !JSVAL_IS_NULL(result)) {
+        JSObject *tmpObj = JSVAL_TO_OBJECT(result);
+        if (tmpObj) {
+            JS_DefineFunction(cx, tmpObj, "create", js_CocosBuilder_create, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+            JS_DefineFunction(cx, tmpObj, "loadScene", js_cocos2dx_CCBReader_createSceneWithNodeGraphFromFile, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+        }
+    }
     
-    JS_DefineFunction(cx, jsb_CCBReader_prototype, "load", js_cocos2dx_CCBReader_readNodeGraphFromFile, 2, JSPROP_READONLY | JSPROP_PERMANENT);
-    JS_DefineFunction(cx, jsb_CCBAnimationManager_prototype, "setCompletedAnimationCallback", js_cocos2dx_CCBAnimationManager_animationCompleteCallback, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_CCBReader_prototype)
+        JS_DefineFunction(cx, jsb_CCBReader_prototype, "load", js_cocos2dx_CCBReader_readNodeGraphFromFile, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+    if (jsb_CCBAnimationManager_prototype)
+        JS_DefineFunction(cx, jsb_CCBAnimationManager_prototype, "setCompletedAnimationCallback", js_cocos2dx_CCBAnimationManager_animationCompleteCallback, 2, JSPROP_READONLY | JSPROP_PERMANENT);
 }

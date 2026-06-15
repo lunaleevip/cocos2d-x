@@ -57,6 +57,7 @@
     if( ! (condition) ) {														\
         cocos2d::CCLog("jsb: ERROR: File %s: Line: %d, Function: %s", __FILE__, __LINE__, __FUNCTION__ );			\
         cocos2d::CCLog(__VA_ARGS__);                                        \
+        { FILE* _lf = fopen("sgscq_jserr.log","a"); if(_lf){ fprintf(_lf,"  PRECOND FAIL %s:%d %s\n", __FILE__, __LINE__, __FUNCTION__); fclose(_lf);} } \
         if( ! JS_IsExceptionPending( context ) ) {							\
             JS_ReportError( context, __VA_ARGS__ );								\
         }																		\
