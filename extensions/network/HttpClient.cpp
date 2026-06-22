@@ -64,8 +64,14 @@ static CCArray* s_responseQueue = NULL;
 static CCHttpClient *s_pHttpClient = NULL; // pointer to singleton
 
 static char s_errorBuffer[CURL_ERROR_SIZE];
+static pthread_once_t s_curlInitOnce = PTHREAD_ONCE_INIT;
 
 typedef size_t (*write_callback)(void *ptr, size_t size, size_t nmemb, void *stream);
+
+static void initCurlGlobal()
+{
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+}
 
 // Callback function used by libcurl for collect response data
 static size_t writeData(void *ptr, size_t size, size_t nmemb, void *stream)
@@ -275,15 +281,25 @@ class CURLRaii
     curl_slist *m_headers;
 public:
     CURLRaii()
-        : m_curl(curl_easy_init())
+        : m_curl(NULL)
         , m_headers(NULL)
     {
+        pthread_once(&s_curlInitOnce, initCurlGlobal);
+        m_curl = curl_easy_init();
     }
 
     ~CURLRaii()
     {
         if (m_curl)
+        {
+#if CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID && defined(__aarch64__)
+            // The bundled legacy libcurl crashes inside curl_easy_cleanup on the
+            // ARM64/native-bridge test target after the first completed request.
+            // Leaking the easy handle is preferable to terminating the game.
+#else
             curl_easy_cleanup(m_curl);
+#endif
+        }
         /* free the linked list for header data */
         if (m_headers)
             curl_slist_free_all(m_headers);
