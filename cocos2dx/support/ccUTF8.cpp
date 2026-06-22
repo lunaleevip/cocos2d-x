@@ -263,7 +263,7 @@ int getUTF8StringLength(const UTF8* utf8, int max);
 #include <vector>
 #include <string>
 
-typedef std::basic_string<unsigned short> CCWideString;
+typedef std::u16string CCWideString;
 
 namespace llvm {
     
@@ -1186,7 +1186,7 @@ char * cc_utf16_to_utf8(const unsigned short* utf16, int* outUTF8CharacterCount 
     
     for (int i = 0; i < utf16Len; ++i)
     {
-        utf16Str.push_back(utf16[i]);
+        utf16Str.push_back(static_cast<char16_t>(utf16[i]));
     }
     
     char* ret = NULL;

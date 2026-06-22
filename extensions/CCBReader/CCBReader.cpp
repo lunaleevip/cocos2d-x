@@ -726,7 +726,7 @@ CCNode * CCBReader::readNodeGraph(CCNode * pParent) {
     int numChildren = this->readInt(false);
     for(int i = 0; i < numChildren; i++) {
         CCNode * child = this->readNodeGraph(node);
-        node->addChild(child);
+        node->addChild(child, child->getZOrder(), child->getTag());
     }
 
     // FIX ISSUE #1860: "onNodeLoaded will be called twice if ccb was added as a CCBFile".

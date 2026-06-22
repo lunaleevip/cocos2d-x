@@ -10005,6 +10005,32 @@ JSBool js_cocos2dx_extension_CCEditBox_create(JSContext *cx, uint32_t argc, jsva
 {
 	jsval *argv = JS_ARGV(cx, vp);
 	JSBool ok = JS_TRUE;
+	if (argc == 2) {
+		cocos2d::CCSize arg0;
+		cocos2d::extension::CCScale9Sprite* arg1;
+		ok &= jsval_to_ccsize(cx, argv[0], &arg0);
+		do {
+			if (!argv[1].isObject()) { ok = JS_FALSE; break; }
+			js_proxy_t *proxy;
+			JSObject *tmpObj = JSVAL_TO_OBJECT(argv[1]);
+			proxy = jsb_get_js_proxy(tmpObj);
+			arg1 = (cocos2d::extension::CCScale9Sprite*)(proxy ? proxy->ptr : NULL);
+			JSB_PRECONDITION2( arg1, cx, JS_FALSE, "Invalid Native Object");
+		} while (0);
+		JSB_PRECONDITION2(ok, cx, JS_FALSE, "Error processing arguments");
+		cocos2d::extension::CCEditBox* ret = cocos2d::extension::CCEditBox::create(arg0, arg1);
+		jsval jsret;
+		do {
+		if (ret) {
+			js_proxy_t *proxy = js_get_or_create_proxy<cocos2d::extension::CCEditBox>(cx, ret);
+			jsret = OBJECT_TO_JSVAL(proxy->obj);
+		} else {
+			jsret = JSVAL_NULL;
+		}
+	} while (0);
+		JS_SET_RVAL(cx, vp, jsret);
+		return JS_TRUE;
+	}
 	if (argc == 4) {
 		cocos2d::CCSize arg0;
 		cocos2d::extension::CCScale9Sprite* arg1;

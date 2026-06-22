@@ -452,7 +452,10 @@ bool CCImage::_initWithPngData(void * pData, int nDatalen)
         CC_BREAK_IF(!info_ptr);
 
 #if (CC_TARGET_PLATFORM != CC_PLATFORM_BADA && CC_TARGET_PLATFORM != CC_PLATFORM_NACL)
-        CC_BREAK_IF(setjmp(png_jmpbuf(png_ptr)));
+        if (setjmp(png_jmpbuf(png_ptr)))
+        {
+            break;
+        }
 #endif
 
         // set the read call back function

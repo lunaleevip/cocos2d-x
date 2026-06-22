@@ -56,7 +56,7 @@
 pthread_t debugThread;
 string inData;
 string outData;
-vector<string> queue;
+vector<string> debugMessageQueue;
 pthread_mutex_t g_qMutex;
 pthread_mutex_t g_rwMutex;
 bool vmLock = false;
@@ -1779,11 +1779,11 @@ jsval ccaffinetransform_to_jsval(JSContext* cx, CCAffineTransform& t)
 
 void SimpleRunLoop::update(float dt) {
     pthread_mutex_lock(&g_qMutex);
-    while (queue.size() > 0) {
-        vector<string>::iterator first = queue.begin();
+    while (debugMessageQueue.size() > 0) {
+        vector<string>::iterator first = debugMessageQueue.begin();
         string str = *first;
         ScriptingCore::getInstance()->debugProcessInput(str);
-        queue.erase(first);
+        debugMessageQueue.erase(first);
     }
     pthread_mutex_unlock(&g_qMutex);
 }
@@ -1998,11 +1998,11 @@ JSBool JSBDebug_LockExecution(JSContext* cx, unsigned argc, jsval* vp)
         while (vmLock) {
             // try to read the input, if there's anything
             pthread_mutex_lock(&g_qMutex);
-            while (queue.size() > 0) {
-                vector<string>::iterator first = queue.begin();
+            while (debugMessageQueue.size() > 0) {
+                vector<string>::iterator first = debugMessageQueue.begin();
                 string str = *first;
                 ScriptingCore::getInstance()->debugProcessInput(str);
-                queue.erase(first);
+                debugMessageQueue.erase(first);
             }
             pthread_mutex_unlock(&g_qMutex);
             sched_yield();
@@ -2024,7 +2024,7 @@ JSBool JSBDebug_UnlockExecution(JSContext* cx, unsigned argc, jsval* vp)
 
 void processInput(string data) {
     pthread_mutex_lock(&g_qMutex);
-    queue.push_back(string(data));
+    debugMessageQueue.push_back(string(data));
     pthread_mutex_unlock(&g_qMutex);
 }
 

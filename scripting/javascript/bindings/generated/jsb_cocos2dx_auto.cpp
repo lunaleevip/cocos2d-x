@@ -51510,6 +51510,7 @@ JSBool js_cocos2dx_CCApplication_getCurrentLanguage(JSContext *cx, uint32_t argc
 	JS_ReportError(cx, "wrong number of arguments: %d, was expecting %d", argc, 0);
 	return JS_FALSE;
 }
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_ANDROID)
 JSBool js_cocos2dx_CCApplication_setResourceRootPath(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
@@ -51561,6 +51562,7 @@ JSBool js_cocos2dx_CCApplication_getResourceRootPath(JSContext *cx, uint32_t arg
 	JS_ReportError(cx, "wrong number of arguments: %d, was expecting %d", argc, 0);
 	return JS_FALSE;
 }
+#endif
 JSBool js_cocos2dx_CCApplication_setAnimationInterval(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
@@ -51628,8 +51630,10 @@ void js_register_cocos2dx_CCApplication(JSContext *cx, JSObject *global) {
 	static JSFunctionSpec funcs[] = {
 		JS_FN("getTargetPlatform", js_cocos2dx_CCApplication_getTargetPlatform, 0, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 		JS_FN("getCurrentLanguage", js_cocos2dx_CCApplication_getCurrentLanguage, 0, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_ANDROID)
 		JS_FN("setResourceRootPath", js_cocos2dx_CCApplication_setResourceRootPath, 1, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 		JS_FN("getResourceRootPath", js_cocos2dx_CCApplication_getResourceRootPath, 0, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+#endif
 		JS_FN("setAnimationInterval", js_cocos2dx_CCApplication_setAnimationInterval, 1, JSPROP_PERMANENT | JSPROP_ENUMERATE),
         JS_FS_END
 	};
@@ -51816,6 +51820,7 @@ JSBool js_cocos2dx_CCEGLView_setFrameSize(JSContext *cx, uint32_t argc, jsval *v
 	JS_ReportError(cx, "wrong number of arguments: %d, was expecting %d", argc, 2);
 	return JS_FALSE;
 }
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_ANDROID)
 JSBool js_cocos2dx_CCEGLView_setFrameZoomFactor(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
@@ -51836,6 +51841,7 @@ JSBool js_cocos2dx_CCEGLView_setFrameZoomFactor(JSContext *cx, uint32_t argc, js
 	JS_ReportError(cx, "wrong number of arguments: %d, was expecting %d", argc, 1);
 	return JS_FALSE;
 }
+#endif
 JSBool js_cocos2dx_CCEGLView_setIMEKeyboardState(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
@@ -51856,6 +51862,7 @@ JSBool js_cocos2dx_CCEGLView_setIMEKeyboardState(JSContext *cx, uint32_t argc, j
 	JS_ReportError(cx, "wrong number of arguments: %d, was expecting %d", argc, 1);
 	return JS_FALSE;
 }
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_ANDROID)
 JSBool js_cocos2dx_CCEGLView_getFrameZoomFactor(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
@@ -51873,6 +51880,7 @@ JSBool js_cocos2dx_CCEGLView_getFrameZoomFactor(JSContext *cx, uint32_t argc, js
 	JS_ReportError(cx, "wrong number of arguments: %d, was expecting %d", argc, 0);
 	return JS_FALSE;
 }
+#endif
 JSBool js_cocos2dx_CCEGLView_setScissorInPoints(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
@@ -51989,9 +51997,13 @@ void js_register_cocos2dx_CCEGLView(JSContext *cx, JSObject *global) {
 
 	static JSFunctionSpec funcs[] = {
 		JS_FN("setFrameSize", js_cocos2dx_CCEGLView_setFrameSize, 2, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_ANDROID)
 		JS_FN("setFrameZoomFactor", js_cocos2dx_CCEGLView_setFrameZoomFactor, 1, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+#endif
 		JS_FN("setIMEKeyboardState", js_cocos2dx_CCEGLView_setIMEKeyboardState, 1, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_ANDROID)
 		JS_FN("getFrameZoomFactor", js_cocos2dx_CCEGLView_getFrameZoomFactor, 0, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+#endif
 		JS_FN("setScissorInPoints", js_cocos2dx_CCEGLView_setScissorInPoints, 4, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 		JS_FN("setViewPortInPoints", js_cocos2dx_CCEGLView_setViewPortInPoints, 4, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 		JS_FN("isOpenGLReady", js_cocos2dx_CCEGLView_isOpenGLReady, 0, JSPROP_PERMANENT | JSPROP_ENUMERATE),
