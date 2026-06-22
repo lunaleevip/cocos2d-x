@@ -38,8 +38,10 @@ typedef void* THREAD_VOID;
 
 #include <errno.h>
 #include <queue>
+#include <time.h>
 
 #include "curl/curl.h"
+#include "zlib.h"
 
 NS_CC_EXT_BEGIN
 
@@ -99,6 +101,43 @@ static size_t writeHeaderData(void *ptr, size_t size, size_t nmemb, void *stream
     return sizes;
 }
 
+static bool maybeInflateZlibResponse(std::vector<char>* data)
+{
+    if (!data || data->size() < 2) {
+        return false;
+    }
+
+    const unsigned char first = static_cast<unsigned char>((*data)[0]);
+    const unsigned char second = static_cast<unsigned char>((*data)[1]);
+    if (first != 0x78 || (second != 0x01 && second != 0x5e && second != 0x9c && second != 0xda)) {
+        return false;
+    }
+
+    uLongf outLen = static_cast<uLongf>(data->size() * 8);
+    if (outLen < 4096) {
+        outLen = 4096;
+    }
+
+    std::vector<char> inflated;
+    int zret = Z_BUF_ERROR;
+    for (int attempt = 0; attempt < 8 && zret == Z_BUF_ERROR; ++attempt) {
+        inflated.resize(outLen);
+        uLongf actualLen = outLen;
+        zret = uncompress(reinterpret_cast<Bytef*>(&inflated[0]),
+                          &actualLen,
+                          reinterpret_cast<const Bytef*>(&(*data)[0]),
+                          static_cast<uLong>(data->size()));
+        if (zret == Z_OK) {
+            inflated.resize(actualLen);
+            data->swap(inflated);
+            return true;
+        }
+        outLen *= 2;
+    }
+
+    return false;
+}
+
 
 static int processGetTask(CCHttpRequest *request, write_callback callback, void *stream, int32_t *errorCode, write_callback headerCallback, void *headerStream);
 static int processPostTask(CCHttpRequest *request, write_callback callback, void *stream, int32_t *errorCode, write_callback headerCallback, void *headerStream);
@@ -134,7 +173,16 @@ static THREAD_VOID networkThread(THREAD_VOID)
         if (NULL == request)
         {
         	// Wait for http request tasks from main thread
-        	pthread_cond_wait(&s_SleepCondition, &s_SleepMutex);
+            struct timespec timeout;
+            clock_gettime(CLOCK_REALTIME, &timeout);
+            timeout.tv_nsec += 100 * 1000 * 1000;
+            if (timeout.tv_nsec >= 1000 * 1000 * 1000) {
+                timeout.tv_sec += 1;
+                timeout.tv_nsec -= 1000 * 1000 * 1000;
+            }
+            pthread_mutex_lock(&s_SleepMutex);
+            pthread_cond_timedwait(&s_SleepCondition, &s_SleepMutex, &timeout);
+            pthread_mutex_unlock(&s_SleepMutex);
             continue;
         }
         
@@ -196,6 +244,9 @@ static THREAD_VOID networkThread(THREAD_VOID)
                 
         // write data to HttpResponse
         response->setResponseCode(responseCode);
+        if (retValue == 0) {
+            maybeInflateZlibResponse(response->getResponseData());
+        }
         
         if (retValue != 0) 
         {
@@ -491,7 +542,9 @@ void CCHttpClient::send(CCHttpRequest* request)
     pthread_mutex_unlock(&s_requestQueueMutex);
     
     // Notify thread start to work
+    pthread_mutex_lock(&s_SleepMutex);
     pthread_cond_signal(&s_SleepCondition);
+    pthread_mutex_unlock(&s_SleepMutex);
 }
 
 // Poll and notify main thread if responses exists in queue
